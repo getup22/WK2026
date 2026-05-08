@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
+echo $_SESSION['user_id'] ?? 'Niet ingelogd';
 require_once __DIR__ . '/includes/db.php';
 
 $user = currentUser();

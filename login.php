@@ -32,6 +32,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     //       $errors[] = 'E-mailadres is verplicht.';
     //   }
     // =============================================================
+    if ($email === '') {
+        $errors[] = 'E-mailadres is verplicht.';
+    }
+    if ($password === '') {
+        $errors[] = 'Wachtwoord is verplicht.';
+    }
 
 
     // =============================================================
@@ -55,7 +61,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     //  TIP: geef GEEN aparte foutmelding voor "gebruiker bestaat niet"
     //  versus "wachtwoord klopt niet" - dat is onveilig.
     // =============================================================
+    if (empty($errors)) {
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
+        $stmt->execute([$email]);
+        $user = $stmt->fetch();
 
+        if ($user && password_verify($password, $user['password'])) {
+            $_SESSION['user_id']    = $user['id'];
+            $_SESSION['user_name']  = $user['name'];
+            $_SESSION['user_email'] = $user['email'];
+
+            echo "Login succesvol! Welkom, " . htmlspecialchars($_SESSION['user_name']) . ".";
+
+            header('Location: index.php');
+            exit; 
+        } else {
+            $errors[] = 'Ongeldige inloggegevens.';
+        }
+    }
 
     // =============================================================
     // TODO 3: SESSIE STARTEN
@@ -94,7 +117,7 @@ include __DIR__ . '/includes/header.php';
                 <div class="form-group">
                     <label class="form-label" for="email">E-mailadres</label>
                     <input type="email" id="email" name="email" class="form-input"
-                           value="<?= htmlspecialchars($email) ?>" required>
+                        value="<?= htmlspecialchars($email) ?>" required>
                 </div>
 
                 <div class="form-group">

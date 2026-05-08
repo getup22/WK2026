@@ -7,7 +7,7 @@
 $db_host = 'localhost';
 $db_name = 'wk_poule';
 $db_user = 'root';
-$db_pass = '';
+$db_pass = '';  // leeg in XAMPP (phpmyadmin)
 
 try {
     $pdo = new PDO(

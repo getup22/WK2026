@@ -17,7 +17,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email    = trim($_POST['email']    ?? '');
     $password = $_POST['password']      ?? '';
     $confirm  = $_POST['password_confirm'] ?? '';
-
+                                          // naam en confirm erbij gedaan
+    if (empty($name) || empty($email) || empty($password) || empty($confirm)) {
+        $errors[] = "Vul alle velden in.";
+    } elseif (strlen($name) < 2) {
+        $errors[] = "naam is te kort";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = "Ongeldig email";
+    } elseif ($password !== $confirm || strlen($password) < 6) {
+        $errors[] = "Wachtwoorden komen niet overeen. Of wachtwoord is te kort";
+    }
     // =============================================================
     // TODO 1: VALIDATIE
     // =============================================================
@@ -35,7 +44,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     //   $errors[] = 'Naam is verplicht.';
     // =============================================================
 
-
+    
+    $stmt = $pdo->prepare(
+        "SELECT id FROM users 
+        WHERE email = ?");
+        
+    $stmt->execute([$email ]);
+    if ($stmt->fetch()) {
+        $errors[] = "Dit e-mailadres is al in gebruik.";
+    }
     // =============================================================
     // TODO 2: CONTROLEER OF E-MAIL AL BESTAAT
     // =============================================================
@@ -51,6 +68,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // =============================================================
 
 
+    if (empty($errors)) {
+        $hashed = password_hash($password, PASSWORD_DEFAULT);
+        $stmt = $pdo->prepare(
+            "INSERT INTO users (name, email, password) 
+            VALUES (?, ?, ?)");
+        $stmt->execute([$name, $email, $hashed]);
+        header('Location: login.php?registered=1');
+        exit;
+    }
     // =============================================================
     // TODO 3: GEBRUIKER OPSLAAN
     // =============================================================
@@ -78,7 +104,6 @@ include __DIR__ . '/includes/header.php';
         <div class="form-card">
             <h1 class="form-title">Word lid</h1>
             <p class="form-subtitle">Maak een account en start direct met voorspellen.</p>
-
             <?php if (!empty($errors)): ?>
                 <?php foreach ($errors as $error): ?>
                     <div class="alert alert-error">⚠ <?= htmlspecialchars($error) ?></div>
@@ -89,13 +114,13 @@ include __DIR__ . '/includes/header.php';
                 <div class="form-group">
                     <label class="form-label" for="name">Volledige naam</label>
                     <input type="text" id="name" name="name" class="form-input"
-                           value="<?= htmlspecialchars($name) ?>" required>
+                        value="<?= htmlspecialchars($name) ?>" required>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label" for="email">E-mailadres</label>
                     <input type="email" id="email" name="email" class="form-input"
-                           value="<?= htmlspecialchars($email) ?>" required>
+                        value="<?= htmlspecialchars($email) ?>" required>
                 </div>
 
                 <div class="form-group">
