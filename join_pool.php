@@ -28,6 +28,9 @@ $user = currentUser();
 $errors  = [];
 $code    = '';
 
+$pool = null;          //  ← declareer $pool alvast hier (later kan gebruiken in TODO 3 en 4) [opdracht van: TODO 2]
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // De code uit het formulier: trim (spaties weg) + uppercase voor
     // hoofdletter-ongevoelige matching. Dus "abc12345" wordt "ABC12345".
@@ -47,6 +50,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // zo wordt hij gegenereerd in create_pool.php. Maar omdat we de
     // code toch gaan opzoeken in de database, is dit niet strict nodig.
     // =============================================================
+    if ($code === '') {
+        $errors[] = 'Vul een toegangscode in.';
+    } elseif (mb_strlen($code) !== 8) {       //  ← deze code mag hoeft niet  
+        $errors[] = 'Toegangscode moet 8 tekens lang zijn.';
+    }
 
 
     // =============================================================
@@ -73,7 +81,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     //   $pool = null;  // zie bovenkant van dit blok
     //
     // Of zet deze zelf alvast neer.
-    // =============================================================
+    // =============================================================    
+    $stmt = $pdo->prepare("SELECT * FROM pools WHERE access_code = ?");
+    $stmt->execute([$code]);
+    $pool = $stmt->fetch();
+
+    if (!$pool) {   // zoek poule via toegangscode
+        $errors[] = 'Deze toegangscode is onbekend.';
+    }
 
 
     // =============================================================
@@ -105,6 +120,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Dit patroon heet "idempotent": dezelfde actie meerdere keren
     // uitvoeren heeft hetzelfde eindresultaat.
     // =============================================================
+    if (empty($errors) && $pool) {    
+    // Als er fouten zijn, stop dan hier
+        $stmt = $pdo->prepare(
+            "SELECT id FROM pool_members WHERE pool_id = ? AND user_id = ?"
+        );
+        $stmt->execute([$pool['id'], $user['id']]);
+
+        if ($stmt->fetch()) {
+            // Gebruiker is al lid → stuur direct door naar de detailpagina.
+            // We geven GEEN foutmelding; we willen dat het "gewoon werkt".
+            header('Location: pool_detail.php?id=' . $pool['id']);
+            exit;
+        }
+    }
 
 
     // =============================================================
@@ -136,7 +165,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     //       // ... toevoegen + redirect ...
     //   }
     // =============================================================
-
+      if (empty($errors) && $pool) {
+          // ... toevoegen + redirect ...
+          $stmt = $pdo->prepare(
+              "INSERT INTO pool_members (pool_id, user_id) VALUES (?, ?)"
+          );
+          $stmt->execute([$pool['id'], $user['id']]);
+      
+          header('Location: pool_detail.php?id=' . $pool['id']);
+          exit;
+      }
 }
 
 $pageTitle = 'Poule joinen';
@@ -157,10 +195,10 @@ include __DIR__ . '/includes/header.php';
                 <div class="form-group">
                     <label class="form-label" for="access_code">Toegangscode</label>
                     <input type="text" id="access_code" name="access_code" class="form-input"
-                           value="<?= htmlspecialchars($code) ?>"
-                           placeholder="Bijv. A1B2C3D4"
-                           style="font-family: var(--font-mono); letter-spacing: 0.15em; text-transform: uppercase;"
-                           maxlength="20" required>
+                        value="<?= htmlspecialchars($code) ?>"
+                        placeholder="Bijv. A1B2C3D4"
+                        style="font-family: var(--font-mono); letter-spacing: 0.15em; text-transform: uppercase;"
+                        maxlength="20" required>
                     <p class="form-help">De 8-cijferige code die je van de poule-beheerder hebt gekregen.</p>
                 </div>
 

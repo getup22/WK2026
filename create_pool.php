@@ -56,6 +56,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // LET OP: als $name leeg is, hoef je niet nog een keer te controleren
     // of de naam te lang is. Gebruik hiervoor een `if / elseif` structuur.
     // =============================================================
+    if (empty($name)) {
+        $errors[] = 'Naam is verplicht.';
+    } elseif (mb_strlen($name) >= 3) {
+        $errors[] = 'Naam moet minimaal 3 tekens lang zijn.';
+    } elseif (mb_strlen($name) <= 100) {
+        $errors[] = 'Naam mag maximaal 100 tekens lang zijn.';
+    } elseif ($description <= 500) {
+        $errors[] = 'Beschrijving mag maximaal 500 tekens lang zijn.';
+    }
 
 
     // =============================================================
@@ -94,6 +103,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // De lus stopt zodra $stmt->fetch() "false" teruggeeft (= code niet
     // gevonden = deze code is nog vrij).
     // =============================================================
+    do {
+        $code = strtoupper(substr(bin2hex(random_bytes(4)), 0, 8));
+        $stmt = $pdo->prepare("SELECT id FROM pools WHERE access_code = ?");
+        $stmt->execute([$code]);
+    } while ($stmt->fetch());
 
 
     // =============================================================
@@ -153,7 +167,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // BELANGRIJK: `exit;` na `header(...)` is essentieel! Anders blijft
     // de code na de redirect gewoon doorlopen en kan er gekke dingen gebeuren.
     // =============================================================
+    try {
+        $pdo->beginTransaction();
 
+        // Stap 1: poule aanmaken
+        $stmt = $pdo->prepare(
+            "INSERT INTO pools (name, description, access_code, created_by)
+             VALUES (?, ?, ?, ?)"
+        );
+        $stmt->execute([$name, $description, $code, $user['id']]);
+
+        // Het ID van de zojuist aangemaakte poule ophalen
+        $pool_id = (int)$pdo->lastInsertId();
+
+        // Stap 2: aanmaker als eerste lid toevoegen
+        $stmt = $pdo->prepare(
+            "INSERT INTO pool_members (pool_id, user_id) VALUES (?, ?)"
+        );
+        $stmt->execute([$pool_id, $user['id']]);
+
+        // Alles gelukt → definitief maken
+        $pdo->commit();
+
+        // Doorsturen naar detailpagina
+        header('Location: pool_detail.php?id=' . $pool_id);
+        exit;
+    } catch (PDOException $e) {
+        // Er ging iets mis → alles terugdraaien
+        $pdo->rollBack();
+        $errors[] = 'Er ging iets mis bij het aanmaken van de poule.';
+    };
 }
 
 $pageTitle = 'Nieuwe poule';
@@ -174,14 +217,14 @@ include __DIR__ . '/includes/header.php';
                 <div class="form-group">
                     <label class="form-label" for="name">Naam van de poule</label>
                     <input type="text" id="name" name="name" class="form-input"
-                           value="<?= htmlspecialchars($name) ?>"
-                           placeholder="Bijv. Klas 4A - WK 2026" required>
+                        value="<?= htmlspecialchars($name) ?>"
+                        placeholder="Bijv. Klas 4A - WK 2026" required>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label" for="description">Beschrijving (optioneel)</label>
                     <textarea id="description" name="description" class="form-textarea"
-                              placeholder="Waar gaat deze poule over?"><?= htmlspecialchars($description) ?></textarea>
+                        placeholder="Waar gaat deze poule over?"><?= htmlspecialchars($description) ?></textarea>
                 </div>
 
                 <div class="flex gap-2">
