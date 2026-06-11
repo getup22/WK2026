@@ -29,7 +29,7 @@ include __DIR__ . '/includes/header.php';
 <div class="container">
     <div class="page-header">
         <div>
-            <div class="page-eyebrow">Profiel</div>
+            <div class="page-eyebrow">Profiel pagina</div>
             <h1 class="page-title">Jouw profiel</h1>
             <p class="page-desc">Bekijk je accountgegevens en jouw persoonlijke statistieken.</p>
         </div>
