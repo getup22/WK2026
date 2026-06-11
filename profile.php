@@ -52,76 +52,67 @@ include __DIR__ . '/includes/header.php';
 
 <div class="container">
     <div class="page-header">
-        <?php if ($success): ?>
-             <div class="alert alert-success">✓ <?= htmlspecialchars($success) ?></div>
-        <?php endif; ?>
-        
-        <?php foreach ($errors as $error): ?>
-            <div class="alert alert-error">⚠ <?= htmlspecialchars($error) ?></div>
-        <?php endforeach; ?>
-
-        
         <div>
-            <div class="page-eyebrow">Profiel pagina
-            </div>
+            <div class="page-eyebrow">Profiel</div>
             <h1 class="page-title">Jouw profiel</h1>
             <p class="page-desc">Bekijk je accountgegevens en jouw persoonlijke statistieken.</p>
         </div>
-        
-        <?php if ($success): ?>
-            <div class="alert alert-success">✓ <?= htmlspecialchars($success) ?></div>
-        <?php endif; ?>
-        
-        <?php foreach ($errors as $error): ?>
-            <div class="alert alert-error">⚠ <?= htmlspecialchars($error) ?></div>
-        <?php endforeach; ?>
-    </div>
-    
-    
-    <section class="form-card">
-    <div class="form-title">
-        <div class="page-eyebrow">Persoonlijke gegevens</div>
-        <h2 class="form-title">Naam wijzigen</h2>
-        <p class="form-subtitle">Je vrienden zien deze naam in de poule.</p>
     </div>
 
-    <form method="POST" action="profile.php" class="form-wrapper">
-        <input type="hidden" name="action" value="update_name">
+    <?php if ($success): ?>
+        <div class="alert alert-success">✓ <?= htmlspecialchars($success) ?></div>
+    <?php endif; ?>
 
-        <div class="form-group">
-            <label class="form-label" for="name">Naam</label>
-            <input
-                id="name"
-                class="form-input"
-                type="text"
-                name="name"
-                value="<?= htmlspecialchars($user['name']) ?>"
-                minlength="2"
-                required>
-            <p class="form-help">Minimaal 2 tekens.</p>
-        </div>
+    <?php foreach ($errors as $error): ?>
+        <div class="alert alert-error">⚠ <?= htmlspecialchars($error) ?></div>
+    <?php endforeach; ?>
 
-        <div class="form-footer">
-            <button type="submit" class="btn btn-primary">Opslaan</button>
-        </div>
-    </form>
-</section>
-
-<section class="form-card" style="margin-top: 24px;">
-    <div class="form-title">
-        <h2 class="form-title">Accountgegevens</h2>
-    </div>
-
-    <div class="form-wrapper">
-        <div class="form-group">
-            <label class="form-label">E-mailadres</label>
-            <div class="form-input" style="background: none; border: none; box-shadow: none; padding: 0;">
-                <?= htmlspecialchars($user['email']) ?>
+    <div class="dash-grid">
+        <section class="form-card">
+            <div class="form-title">
+                <div class="page-eyebrow">Persoonlijke gegevens</div>
+                <h2 class="form-title">Naam wijzigen</h2>
+                <p class="form-subtitle">Je vrienden zien deze naam in de poule.</p>
             </div>
-        </div>
-    </div>
-</section>
 
+            <form method="POST" action="profile.php" class="form-wrapper">
+                <input type="hidden" name="action" value="update_name">
+
+                <div class="form-group">
+                    <label class="form-label" for="name">Naam</label>
+                    <input
+                        id="name"
+                        class="form-input"
+                        type="text"
+                        name="name"
+                        value="<?= htmlspecialchars($user['name']) ?>"
+                        minlength="2"
+                        required>
+                    <p class="form-help">Minimaal 2 tekens.</p>
+                </div>
+
+                <div class="form-footer">
+                    <button type="submit" class="btn btn-primary">Opslaan</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="form-card">
+            <div class="form-title">
+                <div class="page-eyebrow">Accountgegevens</div>
+                <h2 class="form-title">Basisinfo</h2>
+            </div>
+
+            <div class="form-wrapper">
+                <div class="form-group">
+                    <label class="form-label">E-mailadres</label>
+                    <div class="form-input" style="background: none; border: none; box-shadow: none; padding: 0;">
+                        <?= htmlspecialchars($user['email']) ?>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
 
     <div class="stat-row">
         <div class="stat stat-accent">
