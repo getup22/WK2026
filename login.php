@@ -66,6 +66,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$email]);
         $user = $stmt->fetch();
 
+
+        
         if ($user && password_verify($password, $user['password'])) {
             $_SESSION['user_id']    = $user['id'];
             $_SESSION['user_name']  = $user['name'];
@@ -79,7 +81,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'Ongeldige inloggegevens.';
         }
     }
-
     // =============================================================
     // TODO 3: SESSIE STARTEN
     // =============================================================

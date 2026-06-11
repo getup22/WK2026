@@ -28,7 +28,7 @@ $user = currentUser();
 $errors  = [];
 $code    = '';
 
-$pool = null;          //  ← declareer $pool alvast hier (later kan gebruiken in TODO 3 en 4) [opdracht van: TODO 2]
+$pool = null;         //  ← declareer $pool alvast hier (later kan gebruiken in TODO 3 en 4) [opdracht van: TODO 2]
 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

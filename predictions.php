@@ -21,8 +21,12 @@ $success = '';
 // Als de query faalt (bv. tabel bestaat niet), laat $matches dan een
 // lege array zijn zodat de pagina geen fatal error geeft.
 // =============================================================
-
-$matches = []; // <-- studenten vullen deze vanuit de query
+try {
+    $stmt = $pdo->query("SELECT * FROM matches ORDER BY match_date ASC");
+    $matches = $stmt->fetchAll();
+} catch (Exception $e) {
+    $matches = [];  // pagina crasht niet als tabel leeg
+}
 
 
 // =============================================================
@@ -39,8 +43,12 @@ $matches = []; // <-- studenten vullen deze vanuit de query
 //       $predictions[$row['match_id']] = $row;
 //   }
 // =============================================================
-
 $predictions = []; // <-- studenten vullen deze
+$stmt = $pdo->prepare("SELECT * FROM predictions WHERE user_id = ?");
+$stmt->execute([$user['id']]);
+foreach ($stmt->fetchAll() as $row) {
+    $predictions[$row['match_id']] = $row;
+}
 
 
 // =============================================================
@@ -86,6 +94,37 @@ $predictions = []; // <-- studenten vullen deze
 //       // Refresh de predictions array met de nieuwe data
 //   }
 // =============================================================
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $sql = "INSERT INTO predictions (user_id, match_id, predicted_home, predicted_away)
+            VALUES (?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+            predicted_home = VALUES(predicted_home),
+            predicted_away = VALUES(predicted_away)";
+    $stmt = $pdo->prepare($sql);
+    
+    foreach ($_POST['predictions'] ?? [] as $match_id => $scores) {
+        $home = $scores['home'] ?? '';
+        $away = $scores['away'] ?? '';
+        
+        if (($home >= 0 && $home <= 99) && ($away >= 0 && $away <= 99)){
+            continue; 
+        }
+        if ($home === '' || $away === '') {        // Lege velden overslaan — niet als 0 opslaan!
+            continue; // niet ingevuld → overslaan
+        }
+        if (!ctype_digit((string)$home) || !ctype_digit((string)$away)) {   // Alleen cijfers accepteren (geen "abc" of negatieve getallen)
+            continue; // ongeldige invoer → overslaan
+        }
+
+        $stmt->execute([       // Alles klopt: sla op (of update)
+            $user['id'], (int)$match_id, (int)$home, (int)$away
+        ]);
+    }
+
+      $success = 'Je voorspellingen zijn opgeslagen!';
+      // Refresh de predictions array met de nieuwe data
+  }
+
 
 
 $pageTitle = 'Voorspellingen';
