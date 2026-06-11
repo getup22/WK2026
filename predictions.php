@@ -101,13 +101,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             predicted_home = VALUES(predicted_home),
             predicted_away = VALUES(predicted_away)";
     $stmt = $pdo->prepare($sql);
-    
+
     foreach ($_POST['predictions'] ?? [] as $match_id => $scores) {
         $home = $scores['home'] ?? '';
         $away = $scores['away'] ?? '';
-        
-        if (($home >= 0 && $home <= 99) && ($away >= 0 && $away <= 99)){
-            continue; 
+
+        if (($home < 0 && $home > 99) && ($away < 0 && $away > 99)) {
+            continue;
         }
         if ($home === '' || $away === '') {        // Lege velden overslaan — niet als 0 opslaan!
             continue; // niet ingevuld → overslaan
@@ -117,13 +117,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $stmt->execute([       // Alles klopt: sla op (of update)
-            $user['id'], (int)$match_id, (int)$home, (int)$away
+            $user['id'],
+            (int)$match_id,
+            (int)$home,
+            (int)$away
         ]);
     }
 
-      $success = 'Je voorspellingen zijn opgeslagen!';
-      // Refresh de predictions array met de nieuwe data
-  }
+    $success = 'Je voorspellingen zijn opgeslagen!';
+    // Refresh de predictions array met de nieuwe data
+    $predictions = []; // <-- studenten vullen deze
+    $stmt = $pdo->prepare("SELECT * FROM predictions WHERE user_id = ?");
+    $stmt->execute([$user['id']]);
+    foreach ($stmt->fetchAll() as $row) {
+        $predictions[$row['match_id']] = $row;
+    }
+}
+
+
 
 
 
@@ -178,18 +189,18 @@ include __DIR__ . '/includes/header.php';
 
                             <div class="score-input-group">
                                 <input type="number"
-                                       name="predictions[<?= $mid ?>][home]"
-                                       class="score-input"
-                                       min="0" max="99"
-                                       value="<?= htmlspecialchars((string)$home_val) ?>"
-                                       placeholder="-">
+                                    name="predictions[<?= $mid ?>][home]"
+                                    class="score-input"
+                                    min="0" max="99"
+                                    value="<?= htmlspecialchars((string)$home_val) ?>"
+                                    placeholder="-">
                                 <span class="score-sep">:</span>
                                 <input type="number"
-                                       name="predictions[<?= $mid ?>][away]"
-                                       class="score-input"
-                                       min="0" max="99"
-                                       value="<?= htmlspecialchars((string)$away_val) ?>"
-                                       placeholder="-">
+                                    name="predictions[<?= $mid ?>][away]"
+                                    class="score-input"
+                                    min="0" max="99"
+                                    value="<?= htmlspecialchars((string)$away_val) ?>"
+                                    placeholder="-">
                             </div>
 
                             <div class="team">
